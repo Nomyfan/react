@@ -62,7 +62,7 @@ function ensureHostCallbackIsScheduled() {
   if (!isHostCallbackScheduled) {
     isHostCallbackScheduled = true;
   } else {
-    // TODO 为什么取消？
+    // 任务插队
     // Cancel the existing host callback.
     cancelHostCallback();
   }
@@ -317,6 +317,12 @@ function unstable_wrapCallback(callback) {
   };
 }
 
+// 为当前的callback创建任务节点，任务节点包含的信息有callback，优先级，
+// expiration time以及节点连接需要用到的next和previous指针。
+// 调度器的任务队列是一个根据expiration time进行排序的双向环形链表，在放入
+// 新任务的时候，实际上进行的是一个插入排序。如果当前任务排到了所有任务的最前，
+// 且原来的最前任务被调度了但是还没执行，那么取消之前任务的调度，把当前任务作为
+// 最先调度任务。（具体看ensureHostCallbackIsScheduled的逻辑）。
 function unstable_scheduleCallback(callback, deprecated_options) {
   var startTime =
     currentEventStartTime !== -1 ? currentEventStartTime : getCurrentTime();
@@ -438,10 +444,6 @@ function unstable_cancelCallback(callbackNode) {
   callbackNode.next = callbackNode.previous = null;
 }
 
-// TODO 猜想验证
-// 有个特性：子任务会继承父任务的优先级，应该是进入某个优先级调度的
-// 时候会保存一下当前的currentPriorityLevel的值，然后再设置当前
-// 优先级调度的优先级，离开的时候恢复原来的优先级。默认开始的优先级是Normal。
 function unstable_getCurrentPriorityLevel() {
   return currentPriorityLevel;
 }
