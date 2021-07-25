@@ -42,9 +42,11 @@ var currentPriorityLevel = NormalPriority;
 var currentEventStartTime = -1;
 var currentExpirationTime = -1;
 
+// 调度了且正在执行
 // This is set when a callback is being executed, to prevent re-entrancy.
 var isExecutingCallback = false;
 
+// 被调度了，但是还没执行
 var isHostCallbackScheduled = false;
 
 var hasNativePerformanceNow =
@@ -60,6 +62,7 @@ function ensureHostCallbackIsScheduled() {
   if (!isHostCallbackScheduled) {
     isHostCallbackScheduled = true;
   } else {
+    // TODO 为什么取消？
     // Cancel the existing host callback.
     cancelHostCallback();
   }
@@ -374,10 +377,12 @@ function unstable_scheduleCallback(callback, deprecated_options) {
     } while (node !== firstCallbackNode);
 
     if (next === null) {
+      // 当前任务排到最后
       // No callback with a later expiration was found, which means the new
       // callback has the latest expiration in the list.
       next = firstCallbackNode;
     } else if (next === firstCallbackNode) {
+      // 当前任务排到最前
       // The new callback has the earliest expiration in the entire list.
       firstCallbackNode = newNode;
       ensureHostCallbackIsScheduled();
@@ -392,6 +397,8 @@ function unstable_scheduleCallback(callback, deprecated_options) {
   return newNode;
 }
 
+// 暂停调度。
+// TODO 目的是什么？什么时候调度器需要被暂停？
 function unstable_pauseExecution() {
   isSchedulerPaused = true;
 }
@@ -407,6 +414,7 @@ function unstable_getFirstCallbackNode() {
   return firstCallbackNode;
 }
 
+// 从双向环形链表中移除当前的任务回调。
 function unstable_cancelCallback(callbackNode) {
   var next = callbackNode.next;
   if (next === null) {
@@ -430,10 +438,17 @@ function unstable_cancelCallback(callbackNode) {
   callbackNode.next = callbackNode.previous = null;
 }
 
+// TODO 猜想验证
+// 有个特性：子任务会继承父任务的优先级，应该是进入某个优先级调度的
+// 时候会保存一下当前的currentPriorityLevel的值，然后再设置当前
+// 优先级调度的优先级，离开的时候恢复原来的优先级。默认开始的优先级是Normal。
 function unstable_getCurrentPriorityLevel() {
   return currentPriorityLevel;
 }
 
+// 1. 超时，那么应该继续执行任务
+// 2. 没有超时，第一个任务的过期时间没到，那么应该yield
+// 3. shouldYieldToHost返回true（增加除开过期时间之外，其他的yield机会），那么应该yield
 function unstable_shouldYield() {
   return (
     !currentDidTimeout &&
