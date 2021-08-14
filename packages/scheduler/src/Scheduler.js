@@ -72,6 +72,8 @@ function ensureHostCallbackIsScheduled() {
   requestHostCallback(flushWork, expirationTime);
 }
 
+// 执行最近的任务，任务可以返回一个新任务，这个任务的优先级和过期时间继承
+// 自当前任务。内部使用。
 function flushFirstCallback() {
   var flushedNode = firstCallbackNode;
 
@@ -186,6 +188,12 @@ function flushImmediateWork() {
   }
 }
 
+/**
+ * 如果didTimeout为true，那么会把所有超时的任务都执行掉。
+ * 否则则是在可用的frame时间内调度任务。
+ * @param {boolean} didTimeout
+ * @returns
+ */
 function flushWork(didTimeout) {
   // Exit right away if we're currently paused
 
@@ -216,9 +224,9 @@ function flushWork(didTimeout) {
             firstCallbackNode.expirationTime <= currentTime &&
             !(enableSchedulerDebugging && isSchedulerPaused)
           );
-          continue;
+        } else {
+          break;
         }
-        break;
       }
     } else {
       // Keep flushing callbacks until we run out of time in the frame.
