@@ -52,6 +52,9 @@ var isHostCallbackScheduled = false;
 var hasNativePerformanceNow =
   typeof performance === 'object' && typeof performance.now === 'function';
 
+// 如果当前的任务正在执行，那么等待当前任务执行完成。
+// 如果当前的任务只是被调度，但是还没有执行，那么取消原来的任务调度，
+// 重新安排调度新任务。
 function ensureHostCallbackIsScheduled() {
   if (isExecutingCallback) {
     // Don't schedule work yet; wait until the next time we yield.
@@ -152,6 +155,9 @@ function flushFirstCallback() {
   }
 }
 
+// 执行优先级为ImmediatePriority的任务。
+// 初始状态下，currentEventStartTime是-1，意味着没有进行任何的调度。
+// 可以用这个来记录是否处于空调用栈。
 function flushImmediateWork() {
   if (
     // Confirm we've exited the outer most event handler
@@ -239,6 +245,9 @@ function flushWork(didTimeout) {
   }
 }
 
+// 指定调度优先级。看test里，eventHandler里都会调用scheduleCallback，这样
+// 任务节点就会记录下这个指定的优先级。如果不是如此，那么就是eventHandler就
+// 仅仅是一段立即执行的逻辑，调用runWithPriority就是脱裤子放屁。
 function unstable_runWithPriority(priorityLevel, eventHandler) {
   switch (priorityLevel) {
     case ImmediatePriority:
@@ -267,6 +276,7 @@ function unstable_runWithPriority(priorityLevel, eventHandler) {
   }
 }
 
+// 除开不能指定优先级，其他逻辑和unstable_runWithPriority一致。
 function unstable_next(eventHandler) {
   let priorityLevel;
   switch (currentPriorityLevel) {
@@ -298,6 +308,9 @@ function unstable_next(eventHandler) {
   }
 }
 
+// 返回一个闭包，里面包含当前的优先级，作为父级优先级（A）继承。
+// 这个返回的闭包执行的时候，用闭包变量（A）设置为当前的优先级，
+// 当callback执行完成之后，恢复原来的优先级。
 function unstable_wrapCallback(callback) {
   var parentPriorityLevel = currentPriorityLevel;
   return function() {
@@ -409,6 +422,7 @@ function unstable_pauseExecution() {
   isSchedulerPaused = true;
 }
 
+// 恢复调度。
 function unstable_continueExecution() {
   isSchedulerPaused = false;
   if (firstCallbackNode !== null) {
@@ -416,6 +430,7 @@ function unstable_continueExecution() {
   }
 }
 
+// 返回将要调度的任务节点。
 function unstable_getFirstCallbackNode() {
   return firstCallbackNode;
 }
@@ -444,6 +459,7 @@ function unstable_cancelCallback(callbackNode) {
   callbackNode.next = callbackNode.previous = null;
 }
 
+// 返回当前的优先级。
 function unstable_getCurrentPriorityLevel() {
   return currentPriorityLevel;
 }
