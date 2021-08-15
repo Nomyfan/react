@@ -524,6 +524,7 @@ var getCurrentTime;
 var ANIMATION_FRAME_TIMEOUT = 100;
 var rAFID;
 var rAFTimeoutID;
+// 调用rAF和setTimeout，谁先就把另外一个取消掉。
 var requestAnimationFrameWithTimeout = function(callback) {
   // schedule rAF and also a setTimeout
   rAFID = localRequestAnimationFrame(function(timestamp) {
