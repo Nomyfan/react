@@ -424,8 +424,11 @@ function unstable_scheduleCallback(callback, deprecated_options) {
   return newNode;
 }
 
-// 暂停调度。
-// TODO 目的是什么？什么时候调度器需要被暂停？
+/**
+ * 暂停调度。
+ * Q：目的是什么？什么时候调度器需要被暂停？
+ * A：调试的时候。看isSchedulerPaused变量的描述。
+ */
 function unstable_pauseExecution() {
   isSchedulerPaused = true;
 }
@@ -550,9 +553,11 @@ if (hasNativePerformanceNow) {
   };
 }
 
+//#region 主要的三个接口
 var requestHostCallback;
 var cancelHostCallback;
 var shouldYieldToHost;
+//#endregion
 
 var globalValue = null;
 if (typeof window !== 'undefined') {
@@ -629,12 +634,15 @@ if (globalValue && globalValue._schedMock) {
 
   var isFlushingHostCallback = false;
 
+  // TODO 怎么定义？
   var frameDeadline = 0;
   // We start out assuming that we run at 30fps but then the heuristic tracking
   // will adjust this value to a faster fps if we get more frequent animation
   // frames.
+  //#region
   var previousFrameTime = 33;
   var activeFrameTime = 33;
+  //#endregion
 
   shouldYieldToHost = function() {
     return frameDeadline <= getCurrentTime();
@@ -702,6 +710,7 @@ if (globalValue && globalValue._schedMock) {
       return;
     }
 
+    // 如果下一帧的时长大于当前帧时长，说明帧率开始降低，页面开始卡顿了
     var nextFrameTime = rafTime - frameDeadline + activeFrameTime;
     if (
       nextFrameTime < activeFrameTime &&
