@@ -634,7 +634,7 @@ if (globalValue && globalValue._schedMock) {
 
   var isFlushingHostCallback = false;
 
-  // TODO 怎么定义？
+  // 一帧的结束点
   var frameDeadline = 0;
   // We start out assuming that we run at 30fps but then the heuristic tracking
   // will adjust this value to a faster fps if we get more frequent animation
@@ -644,6 +644,7 @@ if (globalValue && globalValue._schedMock) {
   var activeFrameTime = 33;
   //#endregion
 
+  // TODO
   shouldYieldToHost = function() {
     return frameDeadline <= getCurrentTime();
   };
@@ -711,6 +712,8 @@ if (globalValue && globalValue._schedMock) {
     }
 
     // 如果下一帧的时长大于当前帧时长，说明帧率开始降低，页面开始卡顿了
+    // (rafTime - frameDeadline)得到的是相对于frameDeadline的上下浮动值，记作Δ。
+    // 如果Δ大于0，代表帧率降低，反之帧率提高。
     var nextFrameTime = rafTime - frameDeadline + activeFrameTime;
     if (
       nextFrameTime < activeFrameTime &&
