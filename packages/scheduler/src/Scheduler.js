@@ -644,7 +644,7 @@ if (globalValue && globalValue._schedMock) {
   var activeFrameTime = 33;
   //#endregion
 
-  // TODO
+  // 理解为当前rAF执行的时间结束点
   shouldYieldToHost = function() {
     return frameDeadline <= getCurrentTime();
   };
@@ -652,6 +652,7 @@ if (globalValue && globalValue._schedMock) {
   // We use the postMessage trick to defer idle work until after the repaint.
   var channel = new MessageChannel();
   var port = channel.port2;
+  // TODO
   channel.port1.onmessage = function(event) {
     isMessageEventScheduled = false;
 
@@ -694,6 +695,14 @@ if (globalValue && globalValue._schedMock) {
     }
   };
 
+  /**
+   * 做了两件事情。
+   * 1. 记录frame time，并根据上一次的frame time做动态调整，
+   * 得到当前frame执行的deadline。这个deadline用作判断是否要结束当前
+   * 批次的render提供其中一个依据（如果任务已经到了过期时间，那么还是要
+   * 继续一次性执行完毕）。
+   * 2. 触发执行任务事件（postMessage）。
+   */
   var animationTick = function(rafTime) {
     if (scheduledHostCallback !== null) {
       // Eagerly schedule the next animation callback at the beginning of the
