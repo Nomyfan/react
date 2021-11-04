@@ -626,10 +626,23 @@ if (globalValue && globalValue._schedMock) {
     }
   }
 
+  /**
+   * TODO requestHostCallback传入的第一个参数
+   */
   var scheduledHostCallback = null;
+  /**
+   * TODO 记录animationTick被rAF调用后，是否进入了callback的处理
+   * 逻辑（onmessage部分）
+   */
   var isMessageEventScheduled = false;
+  /**
+   * TODO requestHostCallback传入的第二个参数
+   */
   var timeoutTime = -1;
 
+  /**
+   * 记录是否被rAF调用了
+   */
   var isAnimationFrameScheduled = false;
 
   var isFlushingHostCallback = false;
