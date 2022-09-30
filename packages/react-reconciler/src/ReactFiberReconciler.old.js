@@ -248,7 +248,7 @@ export function createContainer(
 }
 
 export function updateContainer(
-  element: ReactNodeList,
+  element: ReactNodeList, // children
   container: OpaqueRoot,
   parentComponent: ?React$Component<any, any>,
   callback: ?Function,
@@ -314,7 +314,9 @@ export function updateContainer(
     update.callback = callback;
   }
 
+  // NOTE(nomyfan) 把更新放入调度队列
   enqueueUpdate(current, update);
+  // NOTE(nomyfan) 立即触发调度
   scheduleUpdateOnFiber(current, lane, eventTime);
 
   return lane;

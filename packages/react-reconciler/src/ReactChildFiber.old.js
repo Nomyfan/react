@@ -359,7 +359,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         // This is a move.
         newFiber.flags = Placement;
         return lastPlacedIndex;
-      } else {
+      } else { // TODO(nomyfan) Only `Eq`?
         // This item can stay in place.
         return oldIndex;
       }
@@ -802,15 +802,16 @@ function ChildReconciler(shouldTrackSideEffects) {
       }
     }
 
+    // 新的currentFirstChild
     let resultingFirstChild: Fiber | null = null;
     let previousNewFiber: Fiber | null = null;
 
     let oldFiber = currentFirstChild;
+    // NOTE(nomyfan) Two pointers algorithm.
     let lastPlacedIndex = 0;
     let newIdx = 0;
-    let nextOldFiber = null;
-    for (; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
-      if (oldFiber.index > newIdx) {
+    for (let nextOldFiber = null; oldFiber !== null && newIdx < newChildren.length; newIdx++) {
+      if (oldFiber.index > newIdx) { // NOTE(nomyfan) How could it happen?
         nextOldFiber = oldFiber;
         oldFiber = null;
       } else {
@@ -830,6 +831,8 @@ function ChildReconciler(shouldTrackSideEffects) {
         if (oldFiber === null) {
           oldFiber = nextOldFiber;
         }
+        // NOTE(nomyfan) 想从oldFiber里找到相同key的fiber。但是如果newChildren返回null，
+        //  会导致两种情景混淆（也就是上面注释说明的）。
         break;
       }
       if (shouldTrackSideEffects) {
@@ -840,6 +843,8 @@ function ChildReconciler(shouldTrackSideEffects) {
         }
       }
       lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, newIdx);
+
+      // 连接链表
       if (previousNewFiber === null) {
         // TODO: Move out of the loop. This only happens for the first run.
         resultingFirstChild = newFiber;
@@ -854,12 +859,16 @@ function ChildReconciler(shouldTrackSideEffects) {
       oldFiber = nextOldFiber;
     }
 
+    // Reach the end the newChildren array.
     if (newIdx === newChildren.length) {
       // We've reached the end of the new children. We can delete the rest.
       deleteRemainingChildren(returnFiber, oldFiber);
       return resultingFirstChild;
     }
 
+    // Reach the end of oldFiber linked list.
+    //  - mount；
+    //  - More elements are added。
     if (oldFiber === null) {
       // If we don't have any more existing children we can choose a fast path
       // since the rest will all be insertions.
@@ -879,6 +888,9 @@ function ChildReconciler(shouldTrackSideEffects) {
       }
       return resultingFirstChild;
     }
+
+    // NOTE(nomyfan) In the first for-loop, updateSlot returns null, which
+    //  makes `break` happen.
 
     // Add all children to a key map for quick lookups.
     const existingChildren = mapRemainingChildren(returnFiber, oldFiber);
@@ -1274,7 +1286,7 @@ function ChildReconciler(shouldTrackSideEffects) {
   function reconcileChildFibers(
     returnFiber: Fiber,
     currentFirstChild: Fiber | null,
-    newChild: any,
+    newChild: any, // aka nextChildren
     lanes: Lanes,
   ): Fiber | null {
     // This function is not recursive.

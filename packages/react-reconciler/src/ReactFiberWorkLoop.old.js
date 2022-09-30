@@ -618,6 +618,8 @@ export function scheduleUpdateOnFiber(
   mostRecentlyUpdatedRoot = root;
 }
 
+// NOTE(nomyfan) 从当前fiber一直往上标记当前路径上的节点都需要更新。
+//
 // This is split into a separate function so we can mark a fiber with pending
 // work without treating it as a typical update that originates from an event;
 // e.g. retrying a Suspense boundary isn't an update, but it does schedule work
@@ -666,6 +668,7 @@ function markUpdateLaneFromFiberToRoot(
   }
 }
 
+// NOTE(nomyfan) 把performSyncWorkOnRoot、performConcurrentWorkOnRoot的调用放到scheduler的回调里。
 // Use this function to schedule a task for a root. There's only one task per
 // root; if a task was already scheduled, we'll check to make sure the priority
 // of the existing task is the same as the priority of the next level that the
@@ -1398,6 +1401,7 @@ function handleError(root, thrownValue): void {
   } while (true);
 }
 
+// NOTE(nomyfan) 用来检查hook是否存在不合法的使用。
 function pushDispatcher() {
   const prevDispatcher = ReactCurrentDispatcher.current;
   ReactCurrentDispatcher.current = ContextOnlyDispatcher;
@@ -1649,13 +1653,15 @@ function performUnitOfWork(unitOfWork: Fiber): void {
   let next;
   if (enableProfilerTimer && (unitOfWork.mode & ProfileMode) !== NoMode) {
     startProfilerTimer(unitOfWork);
-    next = beginWork(current, unitOfWork, subtreeRenderLanes);
+    next = beginWork(current, unitOfWork, subtreeRenderLanes); // TODO(nomyfan) 哪里设置了这个lanes
     stopProfilerTimerIfRunningAndRecordDelta(unitOfWork, true);
   } else {
     next = beginWork(current, unitOfWork, subtreeRenderLanes);
   }
 
   resetCurrentDebugFiberInDEV();
+  // NOTE(nomyfan) beginWork执行完成之后，pendingProps变成memoizedProps。
+  //  分别作为newProps和oldProps。
   unitOfWork.memoizedProps = unitOfWork.pendingProps;
   if (next === null) {
     // If this doesn't spawn new work, complete the current work.
@@ -2351,6 +2357,7 @@ function commitMutationEffects(
 
         // Update
         const current = nextEffect.alternate;
+        // NOTE(nomyfan) 对于一般组件来说，就是执行生命周期钩子。
         commitWork(current, nextEffect);
         break;
       }
@@ -2382,6 +2389,7 @@ function commitMutationEffects(
   }
 }
 
+// NOTE(nomyfan) 这里执行的useLayoutEffect.create和componentDidUpdate/componentDidMount
 function commitLayoutEffects(root: FiberRoot, committedLanes: Lanes) {
   if (__DEV__) {
     if (enableDebugTracing) {
@@ -2434,6 +2442,7 @@ function commitLayoutEffects(root: FiberRoot, committedLanes: Lanes) {
 export function flushPassiveEffects(): boolean {
   // Returns whether passive effects were flushed.
   if (pendingPassiveEffectsRenderPriority !== NoSchedulerPriority) {
+    // NOTE(nomyfan) 不超过normal priority。
     const priorityLevel =
       pendingPassiveEffectsRenderPriority > NormalSchedulerPriority
         ? NormalSchedulerPriority

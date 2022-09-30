@@ -860,6 +860,7 @@ function commitDetachRef(current: Fiber) {
   }
 }
 
+// NOTE(nomyfan) 执行一些生命周期钩子，and (TBD)
 // User-originating errors (lifecycles and refs) should not interrupt
 // deletion, so don't let them throw. Host-originating errors should
 // interrupt deletion, so it's okay
@@ -973,6 +974,7 @@ function commitNestedUnmounts(
   // composites before this host node is removed from the tree. Therefore
   // we do an inner loop while we're still inside the host node.
   let node: Fiber = root;
+  // NOTE(nomyfan) 深度优先遍历
   while (true) {
     commitUnmount(finishedRoot, node, renderPriorityLevel);
     // Visit children because they may contain more composite or host nodes.
@@ -1254,6 +1256,7 @@ function insertOrAppendPlacementNode(
     if (child !== null) {
       insertOrAppendPlacementNode(child, before, parent);
       let sibling = child.sibling;
+      // NOTE(chenqijin) 把当前层级全部插入
       while (sibling !== null) {
         insertOrAppendPlacementNode(sibling, before, parent);
         sibling = sibling.sibling;

@@ -3110,10 +3110,13 @@ function beginWork(
     const newProps = workInProgress.pendingProps;
 
     if (
+      // NOTE(nomyfan) babel是这样来编译JSX上的{...props}的。
+      //  - 如果是<Item {...props} />，那么会被编译成createElement(Item, props)；
+      //  - 如果<Item {...props} name={props.name} />，那么会被编译成createElement(Item, _extends({}, props, {name: props.name}))。
       oldProps !== newProps ||
-      hasLegacyContextChanged() ||
+      hasLegacyContextChanged() || // TODO(nomyfan) 依赖的context是否更新了。这个值在哪里被更新？
       // Force a re-render if the implementation changed due to hot reload:
-      (__DEV__ ? workInProgress.type !== current.type : false)
+      (__DEV__ ? workInProgress.type !== current.type : false) // NOTE(nomyfan) HMR导致组件被更新。
     ) {
       // If props or context changed, mark the fiber as having performed work.
       // This may be unset if the props are determined to be equal later (memo).

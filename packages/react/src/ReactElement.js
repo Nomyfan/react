@@ -356,8 +356,10 @@ export function createElement(type, config, children) {
   let self = null;
   let source = null;
 
+  // 包含了ref的“props”
   if (config != null) {
     if (hasValidRef(config)) {
+      // 把ref从config里提取出来
       ref = config.ref;
 
       if (__DEV__) {
@@ -365,9 +367,11 @@ export function createElement(type, config, children) {
       }
     }
     if (hasValidKey(config)) {
+      // `'' + `是为了让config.key调用toString
       key = '' + config.key;
     }
 
+    // TODO(nomyfan) 这两个变量是jsx-runtime注入的吗？不知道用处是什么。
     self = config.__self === undefined ? null : config.__self;
     source = config.__source === undefined ? null : config.__source;
     // Remaining properties are added to a new props object
@@ -403,6 +407,9 @@ export function createElement(type, config, children) {
   if (type && type.defaultProps) {
     const defaultProps = type.defaultProps;
     for (propName in defaultProps) {
+      // 使用defaultProps需要注意的问题，在有defaultProps的情况下，
+      // 显式的把undefined传入props会导致使用默认值。因此undefined只能
+      // 表示要用默认值。
       if (props[propName] === undefined) {
         props[propName] = defaultProps[propName];
       }

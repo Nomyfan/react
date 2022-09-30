@@ -172,6 +172,7 @@ function warnOnInvalidCallback(callback: mixed, callerName: string): void {
   }
 }
 
+// NOTE(nomyfan) render入口
 function legacyRenderSubtreeIntoContainer(
   parentComponent: ?React$Component<any, any>,
   children: ReactNodeList,
