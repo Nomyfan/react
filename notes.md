@@ -104,7 +104,34 @@ function workLoopSync() {
 
 ## Reconcile的时候子组件导致父组件状态更新，如何添加新调度？
 
+比如setState（实际上是dispatchAction函数bind的结果）后，会调用scheduleUpdateOnFiber，从这个fiber开始往上一直更新parent fiber的Lane。然后标记fiber root有更多的更新（会带上一个当前时间戳，怎么使用它？）。
+
 ## 每次都必须从Root开始吗？
+
+## Lane有什么用？
+
+## React中，有几种effect？
+
+- mutation effect
+- layout effect
+- passive effect
+
+## layout effect和passive effect是如何被记录的。
+
+Hooks只能在function component中使用，在`renderWithHooks`函数中， `useEffect`和`useLayoutEffect`都会调用`pushEffect`，创建出来的Hook对象存放到Fiber的`updateQueue`属性中，这是一个单向环。两个effect的区别是设置的tags不一样，前者是Passive，后者是Layout。
+
+# 在layout effect中setState会怎样？
+
+# passive effect和layout effect的执行顺序？
+
+passive effect是在`performSyncWorkOnRoot`开始执行，是上一次reconcile的结果，在正式commit之前也会进行清空。layout effect是在commit阶段执行清空（commitLayoutEffects）。
+
+# commit阶段，react做了什么？
+
+主要是三件事
+- commitBeforeMutationEffects
+- commitMutationEffects
+- commitLayoutEffects
 
 # React是如何拿着fiber去渲染到DOM上的？
 
@@ -124,8 +151,6 @@ performUnitOfWork -> completeUnitOfWork -> completeWork -> createInstance(react-
 # What's BlocksAPI?
 
 # What's passive effects?
-
-# 有sideEffect的fiber是如何记录的？
 
 # commitMutationEffects
 ```text

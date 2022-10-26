@@ -1147,6 +1147,7 @@ function rerenderState<S>(
   return rerenderReducer(basicStateReducer, (initialState: any));
 }
 
+// NOTE(nomyfan) 把effect对象放到fiber的updateQueue（链表）最后。
 function pushEffect(tag, create, destroy, deps) {
   const effect: Effect = {
     tag,
